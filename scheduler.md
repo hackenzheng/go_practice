@@ -47,10 +47,15 @@ mysql单库最大存储空间2T左右,单表可以达到几十亿行.
 计费类的也可以通过kafka消费实现,但要做到不重不丢, 即exactly once的语义,但是发送发是at least once的语义,比如发送失败超时等情况,消费端需要做幂等设计.
 容灾机制可以是再设置一条数据流,避免kafka挂掉服务不可用.
 
-hdfs是eb级的,单集群节点超5w,单集群规模就能达到EB,但是yarn单集群只能达到10-20k的规模.
+hdfs是eb级的,单集群节点超5w,单集群规模就能达到EB,但是yarn单集群只能达到10-20k的规模.Namenode 的设计上就存在着很多的问题，首先 Java 语言的 GC 问题在 Namenode 规模增长的同时越发严重。
+再者 Namenode 中目录树是由一把读写锁管理，因此并发处理能力极差，造成了延时高 QPS 低的问题。还有就是故障恢复时间过长， Namenode 启动流程中, 线上最大集群恢复需要将近 5 个小时。所以可以用c++重构.
 
 分布式事务,对于一个操作,比如发一篇文章,如果底层用到了kv,mysql多种存储,为了保证数据一致性,就需要保证都写成功或者都写失败,需要使用2pc或3pc等方法,但是代价比较大.
 对于latency要求不高的场景,可以使用异步的操作,并发写不同的数据库,只要其中一个失败了就认为失败,但是会发一条消息进行重试,重试要能实现幂等.
+
+主从同步的异步,同步,半同步只是解决了数据的同步,是主从之间的问题,而一致性算法如raft解决的是切主问题,当主节点挂掉后能够自动切主. 如果只有主从同步,那么出故障了并不能自动切,不能再提供服务.
+
+稀疏特征,因为用到非常细,比如用户id就是一个特征,可以做到真正的个性化,年龄的每个取值也是特征.
 
 ##hitsz相关
 https://github.com/Bohan-hu/HITSZ-COMP2008-Course
@@ -58,6 +63,9 @@ https://github.com/Wh1isper/ProductSearch_Backend
 https://github.com/HLT-HITSZ/HLT-HITSZ.github.io
 https://github.com/forturnme/SystemTap-Monitoring-MySQL8.0
 
+计算机组成原理(哈工大)b站学习: https://www.bilibili.com/video/av15123338/?p=1
+计算机组成的demo: https://www.codecode.net/engintime/Dream-Logic/Dream-Logic
+2017级北航计算机学院计算机组成原理课程设计(MIPS CPU) : https://github.com/aptx1231/BUAA_CO
 
 5g-陶小峰(北邮教授）
 
@@ -92,7 +100,7 @@ risc-v解决物联网场景下的芯片,低功耗,需求碎片化;鸿蒙解决�
 所以cascade是最好的,
 
 ## 工业界可以用到的点: 以项目出发复盘; 以接触到的列举;以学习的列举; 
-消重,向量化召回,日志数据流etl,ad计费,图计算(pagerank,好友关系), 读放大写放大,大key
+消重,重复的判断(标题,内容),向量化召回,日志数据流etl,ad计费,图计算(pagerank,好友关系), 读放大写放大,大key
 
 ## 其他
 京东买的乐仪（leyi）洗鼻器
